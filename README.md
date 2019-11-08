@@ -113,3 +113,23 @@ workflows.
 
 <p>Every Kafka broker is called bootsreap server, that means that you only need to connect to one broker and you will be 
 connected to the entire cluster. Each broker knows about all brokers, topics and partitions (metadata)</p>
+
+### zookeeper
+
+zookeeper manages brokers and maintains a list of them. Zookeeper helps in performing leader election for partitions.
+Zookeeper sends notification to kafka in case of changes in new topic, broker dies, broker comes up, deletion of topic 
+and so on
+
+<p>Kafka can't work without zookeeper. zookeeper always operates on odd number of servers</p>
+
+### Kafka Guarantees
+
+<ul>
+<li>Messages are appended to a topic-partition in the order they are sent</li>
+<li>Consumers read messages in the order stored in topic partition</li>
+<li>With a replication factor of N, producers and consumers tolerate upto N-1 brokers bring down</li>
+</ul>
+
+### Kafka Architecture
+
+[!Kafka Architecture](/images/Kafka%20Architectire.png)
