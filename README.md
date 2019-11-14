@@ -133,3 +133,138 @@ and so on
 ### Kafka Architecture
 
 [!Kafka Architecture](/images/Kafka%20Architectire.png)
+
+
+## Installing and Starting Kafka
+
+To install Kafka on MacOS
+
+```
+brew install kafka
+```
+
+To run Kafka on MacOs
+
+```
+zkserver start
+```
+
+Alternatively
+```
+cd /usr/local/Cellar/kafka/2.3.1/libexec/
+bin/zookeeper-server-start.sh config/zookeeper.properties
+```
+
+To configure zookeeper properties, change  data default zookeeper directory
+```
+cat config/zookeeper.properties
+mkdir data
+mkdir data/zookeeper
+nano /usr/local/Cellar/kafka/2.3.1/libexec/config/zookeeper.properties
+```
+change dataDir to whatever you want
+
+<p>
+To Change Kafka data directory</p>
+
+```
+nano /usr/local/Cellar/kafka/2.3.1/libexec/config/server.properties
+```
+
+Starting Kafka server
+```
+kafka-server-start config/server.properties
+```
+
+## Kafka CLI 
+
+### Creating a topic
+
+To create a topic you need to specify the topic name, number of partitions and replica sets. YOu will also need to 
+specify the url of zookeeper
+
+```a
+kafka-topics --zookeeper 127.0.0.1:2181 --topic firstTopic --create --partition 3 -- replication-factor 1
+```
+
+<p>Also Note you cannot have more replication factors then the number of zookeeper brokers</p>
+
+### List of topicss or topics in detail
+
+```
+kafka-topics --zookeeper 127.0.0.1:2181 --list
+```
+
+<p>To get more information on specific topic use the following command</p>
+
+```
+kafka-topics --zookeeper 127.0.0.1:2181 --topic firstName --describe
+```
+
+### Delete a topic
+
+To delete a Topic,
+
+```
+kafka-topics --zookeeper 127.0.0.1:2181 --topic firstName --delete
+```
+
+<p>Also note that in server.properties delete.topic.enable is set to true for deletion.
+</p>
+
+### producing to Kafka topic
+
+<p>Also, you can get acknowledgement
+   for the data being sent by using --producer-property acks=all as follows</p>
+
+``` 
+kafka-console-producer --broker-list 127.0.0.1:90--topic first_topic --producer-property acks=all
+```
+### Creating a topic that never existed before
+
+<p>when we create a topic that never existed before, we will see a warning, that says no leader available, However in few 
+seconds a leader will be elected and a new topic will be created with default partition and replication factor of 1</p>
+
+<p>One can change the default in server.properties</p>
+
+### Consuming a Kafka topic 
+
+<p>To consume a Kafka topic we need to specify the following command</p>
+
+```
+kafka-console-consumer --bootstrap-server 127.0.0.1:9092 --topic firstTopic
+```
+
+The above command will only receive live messages produced by producers. To receive all messages from beginning we can
+add the following flag to command
+
+```
+kafka-console-consumer --bootstrap-server 127.0.0.1:9092 --topic firstTopic --from-beginning
+```
+
+### Consuming a Kafka topic in a consumer group
+
+You can use the --group flag to specify the consumer group like this in multiple terminal
+windows. This will enable data sent by Kafka producer to be consumed by multiple consumers
+some data can be sent to consumer 1 & some to consumer 2. it depends on the number of consumers in the group
+to the total number of partitions in the group.
+
+``` 
+kafka-console-consumer --bootstrap-server 127.0.0.1:9092 --topic first_topic --group myApp
+```
+
+<p>Also you can use --describe command to fetch additional information about the consumers in the consumer group</p>
+
+``` 
+kafka-consumer-groups --bootstrap-server 127.0.0.1:9092  --group myApp --describe
+```
+
+### Reading from a topic at different offset & resetting offsets
+
+To let consumer read a message from the start in the topic, we can use the following command
+
+```
+kafka-consumer-groups --bootstrap-server 127.0.0.1:9092  --group myApp --reset-offsets --to-earliest --execute 
+--topic first_topic
+```
+
