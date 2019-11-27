@@ -268,3 +268,127 @@ kafka-consumer-groups --bootstrap-server 127.0.0.1:9092  --group myApp --reset-o
 --topic first_topic
 ```
 
+## Kafka Schema Registry & Avro
+
+### Why do we need Schema is in Kafka
+
+<p>Kafka takes binary input and distributes the binary to consumers. it does not even know if the data is string or int.
+So if someone sends bad data, or field changes the consumers will break. Hence we would need to maintain the schema 
+outside of kafka to avoid any negative performance of the cluster.. This is where schema registry comes in place
+and apache avro is just the data format 
+</p>
+
+
+### Avro
+
+Avro is defined by a schema written JSON. to simplify, you can view Avro as JSON with schema attached to it. Avro 
+compresses the data it does not have support for all languages. You can embed the documentation in the Avro itself
+
+<p>
+Avro has support for major primitive types such as bull, boolean, int, long, float, double, bytes, string. A file 
+with extension.avsc  is avro schema file. 
+</p>
+
+<b>Avro Record Schemas</b> 
+
+<p>it has some common fields</p>
+
+<ul>
+    <li>Name: Name of your schema</li>
+    <li>Namespace: Equivalent of package in Java</li>
+    <li>Doc: Documentation to explain your schema</li>
+    <li>Aliases: Optional other Names of your schema</li>
+    <li>Fields 
+     <ul>
+        <li> Name: Name of your field</li>
+        <li> Doc: Documentation of that field</li>
+        <li> Type: Data Type of that field</li>
+        <li> Default: Default value of your field</li>
+     </ul>
+     </li>
+</ul>
+
+<p>Avro has support for complex types such as
+Enums,Arrays, Maps, Unions, Calling other schemas as types
+</p>
+
+<b>Enum</b>
+
+These are fields you know for sure that their values can be enumerated
+
+Example: Customer status (Bronze, Silver, Gold)
+
+<b>Once enum is set, changing the values if forbidden to maintain compati bility</b>
+
+<b>Arrays</b>
+
+Example: {type:Array, items: "string"}
+
+<b>Maps</b>
+
+Example: {type: "map", values: "string"}
+
+<b>Unions</b>
+
+Unions can allow a field to take different types
+
+Example ["string", "int", "boolean"]
+
+Use case: to define optional values as follows
+{"name" : "middle_name", "type": ["null","string"], default: null}
+
+<b>Avro: Logical Types</b>
+
+Avro has support for many logical types such as decimals (bytes), date(int), time-millis, timestamp-millis(long)
+
+Example: {name: "signup_ts", type: "long", logicalType: "timestamp-millis"}
+
+## Avro in Java
+
+### Generic Record
+
+<p>A GenericRecord is used to create an avro object from schema, the schema referenced here can be a</p>
+<ul>
+    <li>File</li>
+    <li> A string </li>
+</ul>
+
+it is not the most recommended way of creating Avro objects because it can fail at runtime. it is the most simplest way
+
+```java
+
+import org.apache.avro.Schema;
+import org.apache.avro.generic.*;
+
+        Schema.Parser parser = new Schema.Parser();
+        Schema schema = parser.parse("{\n" +
+                "     \"type\": \"record\",\n" +
+                "     \"namespace\": \"com.example\",\n" +
+                "     \"name\": \"Customer\",\n" +
+                "     \"doc\": \"Avro Schema for our Customer\",     \n" +
+                "     \"fields\": [\n" +
+                "       { \"name\": \"first_name\", \"type\": \"string\", \"doc\": \"First Name of Customer\" },\n" +
+                "       { \"name\": \"last_name\", \"type\": \"string\", \"doc\": \"Last Name of Customer\" },\n" +
+                "       { \"name\": \"age\", \"type\": \"int\", \"doc\": \"Age at the time of registration\" },\n" +
+                "       { \"name\": \"height\", \"type\": \"float\", \"doc\": \"Height at the time of registration in cm\" },\n" +
+                "       { \"name\": \"weight\", \"type\": \"float\", \"doc\": \"Weight at the time of registration in kg\" },\n" +
+                "       { \"name\": \"automated_email\", \"type\": \"boolean\", \"default\": true, \"doc\": \"Field indicating if the user is enrolled in marketing emails\" }\n" +
+                "     ]\n" +
+                "}");
+
+
+        // create a generic record
+        GenericRecordBuilder customerBuilder = new GenericRecordBuilder(schema);
+        customerBuilder.set("first_name", "John");
+        customerBuilder.set("last_name", "Doe");
+        customerBuilder.set("age", 26);
+        customerBuilder.set("height", 170f);
+        customerBuilder.set("weight", 80.5f);
+        customerBuilder.set("automated_email", false);
+
+        GenericData.Record myCustomer = customerBuilder.build();
+        System.out.println(myCustomer);
+
+```
+
+
