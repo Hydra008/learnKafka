@@ -593,7 +593,7 @@ Following changes can break things
     <li>Renaming a required field (field without default)</li>
 </ul>
 
-### Guidelines to write an Evolving Schema
+#### Guidelines to write an Evolving Schema
 
 <ul>
     <li>Make Primary Key Default</li>
@@ -603,4 +603,45 @@ Following changes can break things
     <li>When evolving schema always give default values</li>
     <li>When evolving a schema, never delete a required field</li>
 </ul>
+
+### Kafka Schema Registry
+
+#### Purpose of Confluent Schema
+
+<ul>
+    <li>Store and retrieve schemas for Producers and Consumers </li>
+    <li>Enforce Backward/ Forward/ Full Compatibility on topics</li>
+    <li>Decrease the size of payload of data sent to kafka </li>
+</ul> 
+
+#### Schema Registry operations
+
+Schema registry allows you add, retrieve, update, delete a schema through a REST API.
+Schemas can be applied to both keys and values.
+
+#### Avro producers and consumers
+
+Confluent Kafka comes with kafka avro producers and consumers which are good for testing/debugging a single message.
+
+We can run the following command to generate a topic, register a schema and produce a single message
+```
+kafka-avro-console-producer \
+    --broker-list 127.0.0.1:9092 --topic test-avro \
+    --property schema.registry.url=http://127.0.0.1:8081 \
+    --property value.schema='{"type":"record","name":"myrecord","fields":[{"name":"f1","type":"string"}]}'
+```
+
+The above command will start the producer, we can send messages for example
+```
+{"f1": "value1"}
+```
+
+now, run the following command, to consume the data
+```
+kafka-avro-console-consumer --topic test-avro \
+    --bootstrap-server 127.0.0.1:9092 \
+    --property schema.registry.url=http://127.0.0.1:8081 \
+    --from-beginning
+``` 
+
 
