@@ -526,3 +526,81 @@ public class SpecificRecordExample {
 
 ```
 
+### Reflections
+
+Reflections help to create an Avro Schema form an existing Java Class
+
+### Schema Evolution
+
+Avro Enables to evolve schema over a time to adapt to business needs. There are 4 kinds of Schema Evolution
+
+#### Backward
+
+Backwards: New Schema can be used with old data <br>
+Example
+<table>
+    <tr>
+        <th>Schema 1 </th>
+        <th>Schema 2</th>
+    </tr>
+        <tr>
+            <td>fname,lname </td>
+            <td>fname,lname, phonNumber(Default: "000-000-0000")</td>
+        </tr>
+</table>
+
+The new schema can let us read old data fname and lname as default is set for phoneNumber
+
+#### Forward
+
+Forward: Old Schema can be used to read new data
+
+<table>
+    <tr>
+        <th>Schema 1 </th>
+        <th>Schema 2</th>
+    </tr>
+        <tr>
+            <td>fname,lname </td>
+            <td>fname,lname, phonNumber</td>
+        </tr>
+</table>
+
+We can read new data with old schema. Avro will just ignore new fields
+
+#### Full
+Full: which is backward and forward
+
+<table>
+    <tr>
+        <th>Schema 1 </th>
+        <th>Schema 2</th>
+    </tr>
+        <tr>
+            <td>fname,lname </td>
+            <td>fname,lname, phonNumber(Default: "000-000-0000")</td>
+        </tr>
+</table>
+
+#### Breaking
+Breaking: which will break the programs of consumers
+
+Following changes can break things
+
+<ul>
+    <li>Adding/Removing elements from enum</li>
+    <li>Changing type of an field</li>
+    <li>Renaming a required field (field without default)</li>
+</ul>
+
+### Guidelines to write an Evolving Schema
+
+<ul>
+    <li>Make Primary Key Default</li>
+    <li>Give default values to all fields that could be removed in future</li>
+    <li>Enums can't evolve over time</li>
+    <li>Don't rename fields. Youc an add aliases instead</li>
+    <li>When evolving schema always give default values</li>
+    <li>When evolving a schema, never delete a required field</li>
+</ul>
+
