@@ -391,4 +391,138 @@ import org.apache.avro.generic.*;
 
 ```
 
+### Specific Record
+
+In this method of writing Avro records, we need to follow the following steps. it is a recommended way of generating 
+avro records because it does not give runtime errors. 
+
+First, we need to store our .avsc file in src/main/resources/avro/*.avdc
+
+then in pom.xml, we need to add following snippet to generate Java object class from the avro
+
+```xml
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.7.0</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+
+
+            <!--for specific record-->
+            <plugin>
+                <groupId>org.apache.avro</groupId>
+                <artifactId>avro-maven-plugin</artifactId>
+                <version>${avro.version}</version>
+                <executions>
+                    <execution>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>schema</goal>
+                            <goal>protocol</goal>
+                            <goal>idl-protocol</goal>
+                        </goals>
+                        <configuration>
+                            <sourceDirectory>${project.basedir}/src/main/resources/avro</sourceDirectory>
+                            <stringType>String</stringType>
+                            <createSetters>false</createSetters>
+                            <enableDecimalLogicalType>true</enableDecimalLogicalType>
+                            <fieldVisibility>private</fieldVisibility>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!--force discovery of generated classes-->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
+                    <execution>
+                        <id>add-source</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>target/generated-sources/avro</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+```
+
+Now, go to Maven Lifecycle, Click on clean and then package. This will make a clean build and package your project. 
+In your target/generated-sources/avro You will have the Java Class created for schema which is easy to use.
+
+```Java
+package com.github.hydra008.kafka;
+
+import com.example.Customer;
+import org.apache.avro.file.DataFileReader;
+import org.apache.avro.file.DataFileWriter;
+import org.apache.avro.io.DatumReader;
+import org.apache.avro.io.DatumWriter;
+import org.apache.avro.specific.SpecificDatumReader;
+import org.apache.avro.specific.SpecificDatumWriter;
+
+import java.io.File;
+import java.io.IOException;
+
+public class SpecificRecordExample {
+    public static void main(String[] args) {
+
+        // create specific record
+        Customer.Builder customerBuilder = Customer.newBuilder();
+        customerBuilder.setAge(30);
+        customerBuilder.setFirstName("Mark");
+        customerBuilder.setLastName("Simpson");
+        customerBuilder.setAutomatedEmail(true);
+        customerBuilder.setHeight(180f);
+        customerBuilder.setWeight(90f);
+
+        Customer customer = customerBuilder.build();
+        System.out.println(customer.toString());
+
+        // write it out to a file
+        final DatumWriter<Customer> datumWriter = new SpecificDatumWriter<>(Customer.class);
+
+        try (DataFileWriter<Customer> dataFileWriter = new DataFileWriter<>(datumWriter)) {
+            dataFileWriter.create(customer.getSchema(), new File("customer-specific.avro"));
+            dataFileWriter.append(customer);
+            System.out.println("successfully wrote customer-specific.avro");
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+
+
+        // read it from a file
+        final File file = new File("customer-specific.avro");
+        final DatumReader<Customer> datumReader = new SpecificDatumReader<>(Customer.class);
+        final DataFileReader<Customer> dataFileReader;
+        try {
+            System.out.println("Reading our specific record");
+            dataFileReader = new DataFileReader<>(file, datumReader);
+            while (dataFileReader.hasNext()) {
+                Customer readCustomer = dataFileReader.next();
+                System.out.println(readCustomer.toString());
+                System.out.println("First name: " + readCustomer.getFirstName());
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        //interpret
+    }
+}
+
+```
 
